@@ -4,8 +4,13 @@ class ChatChannel < ApplicationCable::Channel
   end
 
   def receive(data)
-    recipient = data['recipient']
-    user = User.where(username: recipient).first
-    ChatChannel.broadcast_to(recipient, data) if user.present? && user.online
+    recipients = data['recipients']
+    users = User.where(username: recipients)
+    for user in users
+      if user.online
+        ChatChannel.broadcast_to(user, data)
+      else
+        Message.create(from: data['from'], to: user.username, content: data['content'])
+      end
   end
 end
